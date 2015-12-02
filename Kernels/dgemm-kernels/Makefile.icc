@@ -1,0 +1,33 @@
+CC = icc
+LIBS = -mkl=sequential
+INCLUDES =
+CFLAGS = -O3 -mavx -openmp -g
+
+all:	dgemm-avx2 dgemm-avx dgemm-splat dgemm-naive dgemm-transpose dgemm-block dgemm-copyblock dgemm-unroll dgemm-avx512
+
+
+dgemm-naive: dgemm.o dgemm-naive.o
+	$(CC) -o $@ dgemm.o dgemm-naive.o $(CFLAGS) $(LIBS) $(INCLUDES)
+dgemm-transpose: dgemm.o dgemm-transpose.o
+	$(CC) -o $@ dgemm.o dgemm-transpose.o $(CFLAGS) $(LIBS) $(INCLUDES)
+dgemm-block: dgemm.o dgemm-block.o
+	$(CC) -o $@ dgemm.o dgemm-block.o $(CFLAGS) $(LIBS)
+dgemm-splat: dgemm.o dgemm-splat.o
+	$(CC) -o $@ dgemm.o dgemm-splat.o $(CFLAGS) $(LIBS)
+dgemm-copyblock: dgemm.o dgemm-copyblock.o
+	$(CC) -o $@ dgemm.o dgemm-copyblock.o $(CFLAGS) $(LIBS)
+dgemm-unroll: dgemm.o dgemm-unroll.o
+	$(CC) -o $@ dgemm.o dgemm-unroll.o $(CFLAGS) $(LIBS)
+dgemm-avx512: dgemm.o dgemm-avx512.o
+	$(CC) -o $@ dgemm.o dgemm-avx512.o $(CFLAGS) $(LIBS)
+dgemm-avx: dgemm.o dgemm-avx.o
+	$(CC) -o $@ dgemm.o dgemm-avx.o $(CFLAGS) $(LIBS)
+dgemm-avx2: dgemm.o dgemm-avx2.o
+	$(CC) -o $@ dgemm.o dgemm-avx2.o $(CFLAGS) $(LIBS)
+
+%.o: %.c
+	$(CC) -c $(CFLAGS) $(INCLUDES) $<
+
+clean:
+	rm dgemm-avx2 dgemm-avx dgemm-splat dgemm-naive dgemm-transpose dgemm-block dgemm-copyblock dgemm-unroll *.o 
+
