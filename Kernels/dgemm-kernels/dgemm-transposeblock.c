@@ -28,28 +28,25 @@ void dgemm( const int M, const int N, const int K, const double alpha, const dou
 	//
 	double a, b ,c;
 	//
+        double At[K*M];
+        for (k = 0; k < K; ++k)
+                for (i = 0; i < M; ++i)
+                        At[i*M + k] = A[k*lda + i];
+	//
 	for( kb = 0; kb < K; kb += K_BLOCK_SIZE ){
 		for( ib = 0; ib < M; ib += M_BLOCK_SIZE ){
 			for( jb = 0; jb < N; jb += N_BLOCK_SIZE ){
-				//
 				int Kb = min( K_BLOCK_SIZE, K - kb );
 				int Nb = min( N_BLOCK_SIZE, N - jb );
 				int Mb = min( M_BLOCK_SIZE, M - ib );
-				//
-				double* pA = A + kb*lda + ib;
-				double* pB = B + jb*ldb + kb;
-				double* pC = C + jb*ldc + ib; 
-				//
 				for (i = 0; i < Mb; i = i + 1)
 					for (j = 0; j < Nb; j = j + 1)
 					{
 						double cij = 0.; 
-						for (k = 0; k < Kb; ++k)
-							cij += pA[i + k*lda]*pB[k + j*ldb];
-						//C[(j + jb)*ldc + i + ib] += cij;
-						pC[j*ldc + i] += cij;
+						for (k = 0; k < K; ++k)
+							cij += At[i*M + k]*B[k + j*ldb];
+						C[j*ldc + i] += cij;
 					}
-				//
 			}
 		}
 	}
