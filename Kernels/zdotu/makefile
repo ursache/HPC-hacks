@@ -15,7 +15,7 @@ endif
 ifeq ($(arch),intel)
 CXX = icpc -std=c++11 
 ERRORS = -g -O3 -Wall -Wextra -pedantic
-OPTION = -mkl
+OPTION = -march=core-avx2 -mkl
 endif
 
 #-----------------------------------------------------------------

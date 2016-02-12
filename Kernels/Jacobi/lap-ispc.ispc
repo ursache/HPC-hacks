@@ -1,3 +1,39 @@
+#define GRAINSIZE 1024
+
+task void laplacian_v6( const uniform double v1[], uniform double v2[],
+			  const uniform int dim_m, const uniform int dim_n, const uniform int  stride)
+{
+    uniform const int ystart = taskIndex * GRAINSIZE;
+    uniform const int yend = min((int)(taskIndex + 1) * GRAINSIZE, dim_n);
+    
+    for(uniform int y = ystart; y < yend; ++y)
+    {
+        const uniform int base = y * stride;
+
+        foreach(x = 0 ... dim_n)
+        {
+            const double s = v1[base + x - stride];
+            const double w = v1[base + x - 1];
+            const double e = v1[base + x + 1];
+            const double n = v1[base + x + stride];
+
+            v2[base + x] = 0.25 * (w + e + n + s);
+        }
+    }
+}
+
+export void laplacian( const uniform double * uniform v1, uniform double * uniform v2,
+                   const uniform int dim_m, const uniform int dim_n)
+{
+    uniform const int offset = dim_m + 1;
+    uniform const int ntasks = (dim_n + GRAINSIZE - 1) / GRAINSIZE;
+    launch [ntasks] laplacian_v6(v1 + offset, v2 + offset, dim_m - 2, dim_n - 2, dim_m);
+}
+
+
+
+
+
 export void laplacian_orig(  uniform double v1[], 
 		 	uniform double v2[], 
 			uniform int dim_m,
@@ -7,7 +43,7 @@ export void laplacian_orig(  uniform double v1[],
 
 	//foreach(i = 1 ... dim_m - 1, j = 1 ... dim_n - 1)
 	//for (j = 1; j < dim_m - 1; ++j)
-		cfor(int j = 1; j < dim_n - 1; ++j)
+	cfor(int j = 1; j < dim_n - 1; ++j)
 		//for (i = 1; i < dim_n - 1; ++i)
 		foreach (i = 1 ... dim_n - 1)
 		{
@@ -99,7 +135,7 @@ export void laplacian_v3( const uniform double v1[],
 
 
 
-export void laplacian( const uniform double v1[],
+export void laplacian_v4( const uniform double v1[],
                        uniform double v2[],
                        uniform int dim_m,
                        uniform int dim_n)
@@ -138,7 +174,7 @@ export void laplacian_v5( const uniform double v1[], uniform double v2[],
     {
         const uniform int base = y * stride;
 
-        foreach(x = 0 ... dim_n)
+        foreach(x = 0 ... dim_m)
         {
             const double s = v1[base + x - stride];
             const double w = v1[base + x - 1];
@@ -149,3 +185,6 @@ export void laplacian_v5( const uniform double v1[], uniform double v2[],
         }
     }
 }
+
+
+

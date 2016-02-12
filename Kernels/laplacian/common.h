@@ -78,7 +78,7 @@ double maxNorm(double* v1, double* v2, int size)
 }
 
 
-//__inline
+__inline
 void scheme(double* v1, double* v2, int n)
 {
         double phi_e = *(v1 + 1);

@@ -28,24 +28,18 @@ void kernel(double* v1, double * v2, int m)
 	//
 	_mm_storeu_pd(v2, phi0);
 	//
-	phi0 = _mm_loadu_pd (v1 + 3 );
-	phi0 = _mm_add_pd (_mm_loadu_pd(v1        ), phi0);
-	phi0 = _mm_add_pd (_mm_loadu_pd(v1 + m + 2), phi0);
-	phi0 = _mm_add_pd (_mm_loadu_pd(v1 - m + 2), phi0);
-	phi0 = _mm_mul_pd(alpha, phi0);
-	//
-	_mm_storeu_pd(v2 + 2, phi0);
 }
 //
 void laplacian(double* v1, double* v2, int dim_m, int dim_n)
 {
-	int m = dim_m;
+	int m      = dim_m;
+	int offset = dim_m + 1; 
 	//
-	for (int j = 1; j < dim_m - 1; ++j )
+	for (int j = 0; j < dim_m - 2; ++j )
 	{
-		for (int i = 1; i < dim_n - 1 - (dim_n - 1)%4; i = i + 4)
+		for (int i = 0; i < dim_n - 2 - (dim_n - 2)%2; i = i + 2)
 		{
-			kernel(v1 + j*dim_m + i, v2 + j*dim_m + i, dim_m);
+			kernel(v1 + offset + j*dim_m + i, v2 + offset + j*dim_m + i, dim_m);
 		}
 	}
 }

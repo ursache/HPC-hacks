@@ -2,7 +2,7 @@
 
 include make.inc
 
-all: laplacian laplacian_sse laplacian_sse_v2 laplacian_avx laplacian_avx_v2
+all: laplacian laplacian_naive laplacian_sse laplacian_sse_v2 laplacian_avx laplacian_avx_v2
 
 %.o: %.c
 	$(CC) -c $< $(INCLUDES) $(CFLAGS)
@@ -21,6 +21,9 @@ laplacian_sse_v2:  laplacian_sse_v2.o
 	$(CC) $(CFLAGS) -o $@ $<
 
 laplacian_avx_v2:  laplacian_avx_v2.o
+	$(CC) $(CFLAGS) -o $@ $<
+
+laplacian_naive: laplacian_naive.o
 	$(CC) $(CFLAGS) -o $@ $<
 
 laplacian:  laplacian.o

@@ -1,5 +1,5 @@
 
-
+inline
 void kernel(double* v1, double * v2, int m)
 {
 	double phi_e = *(v1 + 1);

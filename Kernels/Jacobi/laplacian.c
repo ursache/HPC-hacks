@@ -4,6 +4,7 @@
 #include <string.h>
 #include <omp.h>
 #include <sys/time.h>
+#include <math.h>
 
 #include "utils.h"
 //#include "cscs_papi.h"
@@ -31,7 +32,7 @@ void laplacian(double*, double*, int, int);
 //
 void init(double*  p, int n, int m)
 {
-#pragma omp parallel
+#pragma omp parallel for
 	for (int j = 0;  j < n; ++j) 
 	{
 		for (int i = 0; i < n; i++) 
@@ -64,11 +65,26 @@ double maxNorm(double* v1, double* v2, int size)
 }
 
 
-void print(double* p, int n, int m)
+double l2Norm(double* v1, double* v2, int size)
+{
+
+        double myl2 = 0.;
+#pragma omp parallel for reduction(+:myl2) 
+        for (int ii = 0; ii < size; ++ii)
+        {
+		myl2 += fabs(v1[ii]-v2[ii])*(v1[ii] - v2[ii]);
+        }
+        return sqrt(myl2)/size;
+}
+
+
+
+
+void print(double* p, int m, int n)
 {
 	for (int i=0; i < MIN(n, 15); ++i) 
 	{
-		for (int j=0; j < MIN(m, 15); ++j) 
+		for (int j=MIN(m, 15); j > 0; --j) 
 		{
 			printf("%e ", *p);
 			++p;
@@ -98,8 +114,11 @@ int main(int argc, char** argv)
 	printf("3x3 stencil...\n\n");
 	printf("array sizes = %f MB\n", (double) dim_n*dim_m*sizeof(double)/1024/1024);
 
+	double alloctime = -myseconds();
 	init (storage1, dim_n, dim_m);
 	init (storage2, dim_n, dim_m);
+	alloctime += myseconds();
+	printf("Allocation time = %f s.\n\n", alloctime);
 
 	int n_iters = 0;
 	int nrep    = NREP;
@@ -109,7 +128,7 @@ int main(int argc, char** argv)
 	double * st_write = storage1;
 
 	double phi;
-	double norm;
+	double norminf, norml2;
 	double time = - myseconds();
 	
 	//
@@ -140,17 +159,19 @@ int main(int argc, char** argv)
 		//PAPI_STOP;
 		ftime += myseconds();
 		ftime /= nrep;
+		//print(st_write, dim_m, dim_n);
 		//PAPI_PRINT;
 		//
-		norm = maxNorm(st_write, st_read, dim_n*dim_m);
+		norminf = maxNorm(st_write, st_read, dim_n*dim_m);
+		norml2   = l2Norm(st_write, st_read, dim_n*dim_m);
 		double flops = (dim_m - 2)*(dim_n - 2)*4.;
 		//
-		printf("iter = %d, max norm = %g, %f flops, %ld cycles, %f flops/cycle, %f s., %f Gflops/s\n", n_iters, norm, flops, cycles, flops/cycles, ftime, (double) flops/ftime/1e9); 
-	} while (norm > EPSI);
+		printf("iter = %d, linf norm = %g l2 norm = %g, %d flops, %ld cycles, %f flops/cycle, %f s., %f Gflops/s\n", n_iters, norminf, norml2, (int) flops, cycles, flops/cycles, ftime, (double) flops/ftime/1e9); 
+	} while (norminf > EPSI);
 
 	time += myseconds();
 
-	printf("\n# iter= %d time= %g residual= %g\n", n_iters, time, norm); 
+	printf("\n# iter= %d time= %g residual= %g\n", n_iters, time, norml2); 
 
 	free(storage1);
 	free(storage2);

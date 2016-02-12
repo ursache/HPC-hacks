@@ -3,7 +3,9 @@
 #include <math.h>
 #include <string.h>
 #include <sys/time.h>
+#ifdef PAPI
 #include "papi_wrappers.h"
+#endif
 #include "common.h"
 
 #ifdef __GNUC__

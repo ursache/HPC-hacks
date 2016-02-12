@@ -9,7 +9,9 @@
 #endif
 
 #include "common.h"
+#ifdef PAPI
 #include "papi_wrappers.h"
+#endif
 
 
 
