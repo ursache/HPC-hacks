@@ -1,5 +1,3 @@
-// author: diego rossinelli
-
 #define INPUTSTRIDE (32 + 4)
 #define INPUTSLICE  (INPUTSTRIDE * INPUTSTRIDE)
 #define INPUTVOLUME (INPUTSLICE * INPUTSTRIDE)
