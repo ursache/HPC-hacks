@@ -1,10 +1,18 @@
-//author: diego rossinelli
-
 #include <cmath>
 #include <cstdio>
-#include <parallel/algorithm>
 #include <algorithm>
+#include <unistd.h>
+
 #include "defs.h"
+
+//rdtsc acknowledgement:
+//http://stackoverflow.com/questions/9887839/clock-cycle-count-wth-gcc
+static __inline__ unsigned long long rdtsc(void)
+{
+    unsigned hi, lo;
+    __asm__ __volatile__ ("rdtsc" : "=a"(lo), "=d"(hi));
+    return ( (unsigned long long)lo)|( ((unsigned long long)hi)<<32 );
+}
 
 extern "C" void upwind3( 
     const  real uin[], const  real vin[], const  real win[],
@@ -12,8 +20,6 @@ extern "C" void upwind3(
 
 int main()
 {
-    printf("ISPC TEST 3RD ORDER UPWIND CONVECTION SCHEME\n");
-       
     real * velocity[3];
 
     for(int c = 0; c < 3; c++)
@@ -44,12 +50,14 @@ int main()
        
     for(int p = 0; p < npasses; ++p)
     {
-	const size_t startc = _rdtsc();
+	usleep(100);
+	
+	const size_t startc = rdtsc();
 
 	const int bias =  2 * (INPUTSLICE + INPUTSTRIDE + 1);
 	upwind3(velocity[0] + bias, velocity[1] + bias, velocity[2] + bias,  -1 / (6 * h), rhs[0], rhs[1], rhs[2]);
 
-	timings[p] = _rdtsc() - startc;
+	timings[p] = rdtsc() - startc;
     }
     
     std::sort(timings, timings + npasses);
@@ -57,7 +65,7 @@ int main()
     const int p01 = (int)(0.01 * npasses);
     const int p99 = (int)(0.99 * npasses);
     
-    printf("FLOP/CYCLE WITHIN %.1f - %.1f WITH 98%% CONFIDENCE\n",
+    printf("PERFORMANCE WITHIN %.1f - %.1f FLOP/CYCLE (98%% CONFIDENCE)\n",
 	   144 * OUTPUTVOLUME * 1. / timings[p99],
 	   144 * OUTPUTVOLUME * 1. / timings[p01]);
     
