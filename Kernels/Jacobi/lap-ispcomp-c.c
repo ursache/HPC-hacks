@@ -1,9 +1,17 @@
+// author gilles.fourestey@epfl.ch
+// * author gilles fourestey gilles.fourestey@epfl.ch
+// * Copyright 2015. All rights reserved.
+// *
+// * Users are NOT authorized
+// * to employ the present software for their own publications
+// * before getting a written permission from the author of this file
+//
 #include <omp.h>
 #include <immintrin.h>
-
+//
 #define MAX(a,b) (((a)>(b))?(a):(b))
 #define MIN(a,b) (((a)<(b))?(a):(b))
-
+//
 inline
 void kernel(double* v1, double * v2, int m)
 {
@@ -39,6 +47,22 @@ void lap_avx(double* v1, double* v2, int dim_m, int dim_n, int lda)
 }
 
 
+inline
+void kernel_sequential(double* v1, double * v2, int m)
+{
+        double phi_e = *(v1 + 1);
+        double phi_w = *(v1 - 1);
+
+        double phi_n = *(v1 + m);
+        double phi_s = *(v1 - m);
+
+        double phi = 0.25*(phi_e + phi_w + phi_n + phi_s);
+
+        *(v2) = phi;
+}
+
+
+
 
 void laplacian( const double * v1, 
 		double * v2,
@@ -55,19 +79,23 @@ void laplacian( const double * v1,
 		int my_rank     = omp_get_thread_num();
 		int num_threads = omp_get_num_threads();
 #endif
-		//
-		//const int blocksize = (dim_n - 2)/num_threads;
-		
 		int n_block  = num_threads;
 		int n_block_size = (int) ceil((float)(dim_n - 2)/n_block);
 		int n_offset     = my_rank*n_block_size;
 		n_block_size = MIN(dim_n - 2 - my_rank*n_block_size, n_block_size);
-		//printf("%d: n_block = %d, n_block_size = %d, offset = %d\n", my_rank, n_block, n_block_size, offset + n_offset*dim_m);
-		
-		//printf("%d: ? %d %d\n", my_rank, (my_rank + 1)*n_block_size, dim_n - 2);
-		//printf("blocksize = %d, offset = %d, local m = %d, where = %d\n", n_block_size, offset, dim_m - 2, offset + n_offset*dim_m);
-		//const int offset_n = min(blocksize*my_rank, 
-		//const int offset_m = blocksize*dim_m;
+
+#if 0
+		int kstart = 0; 
+                while ( ((long) &v2[v2 + offset + n_offset + kstart]) & 0x000000000000001F )
+                {
+                        kstart++;
+                }
+		//
+		for (; i < kstart; ++i)
+                {
+                        kernel_sequential(v1 + j*dim_n + i, v2 + j*dim_n + i, dim_n);
+                }	
+#endif
 		laplacian_v6(v1 + offset + n_offset*dim_m, v2 + offset + n_offset*dim_m, dim_m - 2, n_block_size, dim_m);
 		//lap_avx(v1 + offset + n_offset*dim_m, v2 + offset + n_offset*dim_m, dim_m - 2, n_block_size, dim_m);
 		asm volatile ("mfence" ::: "memory");
