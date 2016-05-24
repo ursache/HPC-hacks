@@ -23,8 +23,8 @@
 
 #define MIN(a,b)  (((a<b)?a:b))
 
-#define DIM_N 10000
-#define DIM_M 10000
+#define DIM_N 1000
+#define DIM_M 1000
 
 #define NREP  1
 //
@@ -111,7 +111,7 @@ int main(int argc, char** argv)
 	double* restrict storage1 = (double*)malloc(dim_n*dim_m*sizeof(double));
 	double* restrict storage2 = (double*)malloc(dim_n*dim_m*sizeof(double));
 
-	printf("3x3 stencil...\n\n");
+	printf("3x3 stencil...%dx%d\n\n", dim_m, dim_n);
 	printf("array sizes = %f MB\n", (double) dim_n*dim_m*sizeof(double)/1024/1024);
 
 	double alloctime = -myseconds();
@@ -130,10 +130,11 @@ int main(int argc, char** argv)
 	double phi;
 	double norminf, norml2;
 	double time = - myseconds();
-	
+	int count = 0;	
 	//
 	do 
 	{
+		count++;
 		// swaping the solutions
 		double *tmp = st_read;
 		st_read     = st_write;
@@ -167,7 +168,8 @@ int main(int argc, char** argv)
 		double flops = (dim_m - 2)*(dim_n - 2)*4.;
 		//
 		printf("iter = %d, linf norm = %g l2 norm = %g, %d flops, %ld cycles, %f flops/cycle, %f s., %f Gflops/s\n", n_iters, norminf, norml2, (int) flops, cycles, flops/cycles, ftime, (double) flops/ftime/1e9); 
-	} while (norminf > EPSI);
+	// while (norml2 > EPSI);
+	} while (count < 20);
 
 	time += myseconds();
 
