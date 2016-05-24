@@ -24,6 +24,7 @@ void kernel(adouble* v1, adouble * v2, int m)
 	//
 	//printf("-> p = %p\n", &v2[0]);
 	_mm256_stream_pd(v2, phi_e);
+
 }
 
 
@@ -63,9 +64,15 @@ void laplacian(double* v1, double* v2, int dim_m, int dim_n)
 		{
 			kernel(v1 + j*dim_n + i, v2 + j*dim_n + i, dim_n);
 		}
+		//asm volatile ("mfence" ::: "memory");
 		for (; i < dim_m - 1; ++i)
 		{
 			kernel_sequential(v1 + j*dim_n + i, v2 + j*dim_n + i, dim_n);	
 		}
 	}
+#pragma omp parallel 
+{	
+	_mm_sfence();
+}
+
 }
