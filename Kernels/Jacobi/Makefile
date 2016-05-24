@@ -1,6 +1,7 @@
 CC=gcc
 ISPC=ispc
-all: lap-ispcomp lap-avx3 lap-avx2 lap-avx lap-ispc lap-naive lap-sse lap-sse2 
+all: lap-avx3 lap-avx2 lap-avx lap-naive lap-sse lap-sse2 
+#all: lap-ispcomp2 lap-ispcomp lap-avx3 lap-avx2 lap-avx lap-ispc lap-naive lap-sse lap-sse2 
 FLAGS  = -std=gnu99 -g -O3 -march=native -fopenmp -lm
 #FLAGS += -DPAPI -I/ssoft/papi/5.4.0/gnu/include/ /ssoft/papi/5.4.0/gnu/lib/libpapi.a
 #FLAGS +=  -I/apps/dora/iaca/iaca-lin32/include/
@@ -32,6 +33,9 @@ lap-ispcomp: laplacian.o lap-ispcomp-c.o lap-ispcomp.o
 #lap-ispcomp: laplacian.o lap-ispcomp-c.o 
 	gcc $(FLAGS) $^ -o $@
 #
+lap-ispcomp2: laplacian.o lap-ispcomp-c.o lap-ispcomp2.o 
+	gcc $(FLAGS) $^ -o $@
+#
 tasksys.o: tasksys.cpp
 	clang++ -O2 -c $<
 
@@ -40,8 +44,9 @@ tasksys.o: tasksys.cpp
 	$(CC) -S $(FLAGS) $< -o $@.s 
 
 %.o: %.ispc
+#	$(ISPC) --opt=force-aligned-memory -O3 --opt=fast-math  $< -o $@ --target=avx2-i64x4 --cpu=core-avx2
 	$(ISPC) -O3 --opt=fast-math  $< -o $@ --target=avx2-i64x4 --cpu=core-avx2
-	$(ISPC) -O3 --opt=fast-math  $< -o $@.s --target=avx2-i64x4 --cpu=core-avx2 --emit-asm
+	$(ISPC) --opt=force-aligned-memory -O3 --opt=fast-math  $< -o $@.s --target=avx2-i64x4 --cpu=core-avx2 --emit-asm
 
 clean:
-	rm -f *.s *.lst *.o a.out lap-ispcomp lap-avx lap-ispc lap-sse lap-sse2 lap-naive
+	rm -f *.s *.lst *.o a.out lap-ispcomp2 lap-ispcomp lap-avx lap-avx2 lap-avx3 lap-ispc lap-sse lap-sse2 lap-naive
