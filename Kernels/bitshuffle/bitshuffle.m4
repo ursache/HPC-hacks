@@ -1,7 +1,4 @@
 #/*
-#* sort-sources.cpp
-#* Part of 2d-treecodes
-#*
 #* Created and authored by Diego Rossinelli on 2015-11-25.
 #* Copyright 2015. All rights reserved.
 #*
