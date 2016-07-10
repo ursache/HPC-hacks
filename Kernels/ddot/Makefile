@@ -1,16 +1,16 @@
-CC = gcc
-CXX = g++
+CC = icc
+CXX = icpc
 #LIBS = /users/fgilles/Projects/OpenBlas/libopenblas.a 
 INCLUDES = 
 
-CFLAGS = -g -fopenmp /home/foureste/Projects/OpenBLAS-0.2.14/libopenblas.a -O -march=core-avx2 -fstrict-aliasing 
+CFLAGS += -g -mkl -O -march=native -fstrict-aliasing 
+CFLAGS += -DCHECK 
+CFLAGS += -qopenmp 
+#CFLAGS += -qopt_report1 
 
-MBS = 256
-NBS = 32
-KBS = 256
 
 #all:	ddot-opt ddot-splat ddot-naive ddot-transpose ddot-block ddot-copyblock ddot-unroll  
-all:	ddot-naive #ddot-fma #ddot-transpose ddot-copyblock ddot-unroll ddot-arm64 ddot-arm64-8x4 
+all:	ddot-naive 
 #all:	ddot-fma ddot-arm64-8x4 arm-pp ddot-arm64 ddot-unroll ddot-ref ddot-copyblock ddot-block ddot-naive ddot-block ddot-transpose neon 
 
 
