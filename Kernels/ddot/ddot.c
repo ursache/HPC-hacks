@@ -24,6 +24,7 @@
 
 #include <unistd.h>
 #include <sys/time.h>
+#include <stdint.h>
 
 #include "mm_malloc.h"
 //#include <mkl.h>
@@ -37,10 +38,9 @@
  *
  *         You may want to modify these to speed debugging...
  *         */
-#define MIN_RUNS     10
-#define MIN_CPU_SECS 1.00000001
+#define MIN_RUNS     100000
 
-#define NN 512
+#define NN 8192
 
 //#define PAPI
 
@@ -65,9 +65,10 @@ double ddot_ref( const int N, const double *a, const int incx, const double *b, 
 		ops += 2;
 		mem += 2;
 	}
-	printf("ref ops = %ld, ", ops); 
-	printf("ref mem = %ld, ", mem);
-	printf("AI = %f\n", (double) ops/(mem*sizeof(double)));
+	//printf("ref ops = %ld, ", ops); 
+	//printf("ref mem = %ld, ", mem);
+	//printf("AI = %f\n", (double) ops/(mem*sizeof(double)));
+	//
 	return res;
 }	
 
@@ -106,24 +107,32 @@ time_ddot (const int N,
 	int i;
 	double dot;
 
-	while (secs < MIN_CPU_SECS) 
+	double cpu_time = 0;
+	//
+	cpu_time -= mysecond();
+	uint64_t  cycles = __rdtsc();
+	//
+	//sleep(10);
+//#pragma omp parallel for private(i) 
+	for (i = 0; i < num_iterations; ++i) 
 	{
-		double cpu_time = 0;
-		for (i = 0; i < num_iterations; ++i) 
-		{
-			cpu_time -= mysecond();
-			dot = ddot(N, A, incx, B, incy);
-			cpu_time += mysecond();
-		}
-
-		mflops  = 2.0 * num_iterations*N/1.0e6;
-		secs    = cpu_time;
-		mflop_s = mflops/secs;
-		//
-		num_iterations *= 2;
+		dot = ddot(N, A, incx, B, incy);
 	}
+	//
+	cycles     = __rdtsc() - cycles;
+	cpu_time += mysecond();
+	//printf("\n%ld cycles\n", cycles);
+	uint64_t bytes_loaded = 2*N*sizeof(double)*num_iterations;
+	//printf("\n%ld Bytes loaded\n", bytes_loaded);
+	
+	mflops  = 2.0 * num_iterations*N/1.0e6;
+	secs    = cpu_time;
+	mflop_s = mflops/secs;
+	//
 	printf("ddot = %f, ", dot);
-	return mflop_s;
+	printf("%ld cycles, ", cycles); 
+	printf("%f bytes/cycle", (double) bytes_loaded/cycles);
+	return dot;
 }
 //
 //
@@ -138,25 +147,25 @@ double time_ddot_blas(const int N, const double *A, const int incx,
 	int i;
 	double dot;
 
-	while (secs < MIN_CPU_SECS) 
+	double cpu_time = 0;
+	//
+	double t = __rdtsc();
+	for (i = 0; i < num_iterations; ++i)
 	{
-		double cpu_time = 0;
-		//
-		for (i = 0; i < num_iterations; ++i)
-		{
-			cpu_time -= mysecond();	
-			dot = ddot_(&N, A, &incx, B, &incy);
-			cpu_time += mysecond();
-		}
-		//
-		mflops  = 2.0*num_iterations*N/1.0e6;
-		secs    = cpu_time;
-		mflop_s = mflops/secs;
-		//
-		num_iterations *= 2;
+		cpu_time -= mysecond();	
+		dot = ddot_(&N, A, &incx, B, &incy);
+		cpu_time += mysecond();
 	}
-	printf("ddot = %f, ", dot);
-	return mflop_s;
+	t -= __rdtsc();
+	//
+	mflops  = 2.0*num_iterations*N/1.0e6;
+	secs    = cpu_time;
+	mflop_s = mflops/secs;
+	//
+	num_iterations *= 2;
+
+	printf("ddot = %g, ", dot);
+	return dot;
 }
 
 	int
@@ -168,7 +177,7 @@ main (int argc, char *argv[])
 
 	if (argc == 2)
 	{
-		N    = atoi(argv[1]);
+		N = atoi(argv[1]);
 	}
 	else
 	{
@@ -178,24 +187,29 @@ main (int argc, char *argv[])
 	int incx = 1;
 	int incy = 1;
 
-	double* A  = (double*) _mm_malloc(N*sizeof(double), 32);
-	double* B  = (double*) _mm_malloc(N*sizeof(double), 32);
+	double* A  = (double*) _mm_malloc(N*sizeof(double), 64);
+	double* B  = (double*) _mm_malloc(N*sizeof(double), 64);
 
 	vector_init(A,  N, 1.);
-	//init_t(A, M, K, 1.);
 	vector_init(B,  N, 1.);
 	//
-	printf("Size: %g GB\t", 2*N*8/1024./1024./1024.); fflush(stdout);
+	printf("Size: %g KB: ", 2*N*8/1024.); fflush(stdout);
 	//
-	mflop_s = time_ddot(N, A, incx, B, incy);    
-	printf ("Gflop/s: %g\n ", mflop_s/1000.); fflush(stdout);
+	double dot = time_ddot(N, A, incx, B, incy);    
 	//
-#if 1
+	//printf ("Gflop/s: %g\n", mflop_s/1000.); fflush(stdout);
+	//
+#ifdef BLAS
 	mflop_b = time_ddot_blas(N, A, incx, B, incy);
 	printf ("blas Gflops: %g\n", mflop_b/1000);
 
 #endif
-	printf("naive = %f", ddot_ref(N, A, incx, B, incy)); 
+#ifdef CHECK
+	double check = ddot_ref(N, A, incx, B, incy);
+	if (fabs(check - dot) < 1e-7) printf(" (ok)");
+	//printf("naive = %f", ddot_ref(N, A, incx, B, incy)); 
+	//printf("\n");
+#endif
 	printf("\n");
 	_mm_free(A);
 	_mm_free(B);
