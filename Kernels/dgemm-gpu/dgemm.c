@@ -145,11 +145,12 @@ int main (int argc, char *argv[])
 
 	printf("Allocation time = %f s.\n", atime);
 
+	printf("Setting up... "); fflush(stdout);
 	double ftime = -myseconds();
-	fill(A,  size_A,  1.);
+	fill(A,  size_A,  0.);
 	//eye (B,     ldb,   N );
-	fill(B,  size_B,  1.);
-	fill(Cb, size_C,  1.);
+	fill(B,  size_B,  0.);
+	fill(Cb, size_C,  0.);
 
 
 #ifdef CHECK

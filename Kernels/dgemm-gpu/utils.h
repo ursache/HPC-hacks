@@ -55,6 +55,7 @@ void fill(double *A, int size, double v)
 		return;
 	}
 	long int ii;
+#pragma omp parallel for private(ii)
 	for (ii = 0; ii < size; ++ii)
 	{
 		double r1 = (double)(1.+rand())/(double)(RAND_MAX+1.);

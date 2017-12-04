@@ -1,8 +1,9 @@
 # module swap PrgEnv-cray PrgEnv-gnu; module load cudatoolkit
-CC = icc
-LIBS = -L/ssoft/nvidia/cuda-7.0/RH6/all/x86_E5v2//lib64/
+CC = gcc
+LIBS = -L/usr/local/cuda-8.0/lib64/
+CUDA_INCLUDE=/usr/local/cuda-8.0/include/
 INCLUDES = -I./ -I${CUDA_INCLUDE}
-CFLAGS = -O2 -g0 -openmp -lcublas -lcudart -lcuda
+CFLAGS = -O2 -g0 -fopenmp -lcublas -lcudart -lcuda -lm
 #CFLAGS = -mkl -O2 -g0 -fopenmp -lnvidia-ml -lcublas -lcudart -lcuda
 #CFLAGS += -DCHECK
 CFLAGS += -DPINNED
